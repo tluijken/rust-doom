@@ -5,7 +5,6 @@ use crate::WIDTH;
 use image::{DynamicImage, GenericImageView};
 use minifb::{Key, Window};
 const LINE_HEIGHT: usize = 20 * crate::SCALE as usize;
-const INPUT_COOLDOWN: f64 = 0.15;
 
 const SKULL_LUMP_NAME: &str = "M_SKULL1";
 const BACKGROUND_LUMP_NAME: &str = "TITLEPIC";
@@ -29,7 +28,6 @@ pub struct Menu {
     background: DynamicImage,
     logo: DynamicImage,
     skull: DynamicImage,
-    last_input_time: f64,
 }
 
 fn scale_image(img: DynamicImage) -> DynamicImage {
@@ -95,28 +93,21 @@ impl Menu {
             background: img,
             skull: wad.get_image(SKULL_LUMP_NAME).map(scale_image).unwrap(),
             logo: wad.get_image(TITLE_LUMP_NAME).map(scale_image).unwrap(),
-            last_input_time: 0.0,
         }
     }
 
     pub fn handle_input(&mut self, window: &mut Window, game_state: &mut GameState) {
-        if self.last_input_time + INPUT_COOLDOWN > get_time() {
-            return;
-        }
         if window.is_key_down(Key::Down) {
             self.selected = (self.selected + 1) % self.options.len();
-            self.last_input_time = get_time();
         }
         if window.is_key_down(Key::Up) {
             self.selected = match self.selected > 0 {
                 true => self.selected - 1,
                 false => self.options.len() - 1,
             };
-            self.last_input_time = get_time();
         }
         if window.is_key_down(Key::Enter) {
             (self.options[self.selected].action)(game_state);
-            self.last_input_time = get_time();
         }
     }
 
@@ -141,11 +132,4 @@ impl Menu {
             start_y += LINE_HEIGHT;
         }
     }
-}
-
-fn get_time() -> f64 {
-    let time = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap();
-    time.as_secs_f64()
 }
