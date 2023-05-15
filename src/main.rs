@@ -11,8 +11,7 @@ mod game_state;
 use game_state::GameState;
 mod menu;
 use menu::Menu;
-
-mod wad_parser;
+mod wad;
 
 fn main() {
     let mut window =

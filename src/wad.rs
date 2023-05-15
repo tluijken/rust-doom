@@ -4,7 +4,10 @@ use std::collections::HashMap;
 use std::env;
 use std::io::{Cursor, Read};
 use std::path::PathBuf;
-pub struct WadParser {
+
+const PALETTE_LUMP_NAME: &str = "PLAYPAL";
+
+pub struct WadFile {
     // create a tuple array with an id, name and byte array
     pub lumps: HashMap<String, Vec<u8>>,
 }
@@ -21,10 +24,9 @@ fn get_wad_dir() -> PathBuf {
     }
 }
 
-impl WadParser {
-    pub fn new() -> Self {
-        let wad = wad::load_wad_file(get_wad_dir().join(crate::WAD_FILE))
-            .expect("Failed to load WAD file");
+impl WadFile {
+    pub fn load(path: &str) -> Self {
+        let wad = wad::load_wad_file(get_wad_dir().join(path)).expect("Failed to load WAD file");
         let lumps = wad.entry_iter().fold(HashMap::new(), |mut result, item| {
             result.insert(item.display_name().to_string(), item.lump.to_vec());
             result
@@ -43,7 +45,7 @@ impl WadParser {
         let lump = self
             .get_lump(name)
             .expect(format!("Image with name {} not found", name).as_str());
-        let palette = self.get_lump("PLAYPAL").expect("Palette not found");
+        let palette = self.get_lump(PALETTE_LUMP_NAME).expect("Palette not found");
         let palette = decode_palette(palette);
         decode_lump_image(lump, palette)
     }
@@ -157,7 +159,7 @@ fn decode_lump_image(
     Ok(DynamicImage::ImageRgb8(img))
 }
 
-pub fn decode_palette(data: &Vec<u8>) -> Vec<[u8; 3]> {
+fn decode_palette(data: &Vec<u8>) -> Vec<[u8; 3]> {
     let mut palette = Vec::new();
     for i in 0..256 {
         let r = data[i * 3];

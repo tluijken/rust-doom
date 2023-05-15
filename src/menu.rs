@@ -1,5 +1,5 @@
 use crate::game_state::GameState;
-use crate::wad_parser;
+use crate::wad::WadFile;
 use crate::HEIGHT;
 use crate::WIDTH;
 use image::{DynamicImage, GenericImageView};
@@ -59,7 +59,7 @@ fn render_image(img: &DynamicImage, x_pos: usize, y_pos: usize, buffer: &mut [u3
 
 impl Menu {
     pub fn new() -> Self {
-        let wad = wad_parser::WadParser::new();
+        let wad = WadFile::load(crate::WAD_FILE);
 
         let img = wad
             .get_image(BACKGROUND_LUMP_NAME)
