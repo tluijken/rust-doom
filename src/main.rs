@@ -2,12 +2,15 @@ use minifb::{Key, Window, WindowOptions};
 
 pub const WIDTH: usize = 1024;
 pub const HEIGHT: usize = 768;
+// the original Doom resolution is 320x200, so we need to scale the graphics up
+const SCALE: f32 = WIDTH as f32 / 320 as f32;
+// TEMPORARY: hard-coded the WAD file name
+const WAD_FILE: &str = "doom1.wad";
 
 mod game_state;
 use game_state::GameState;
 mod menu;
 use menu::Menu;
-const WAD_FILE: &str = "wads/doom2.wad";
 mod directory;
 
 mod wad_parser;

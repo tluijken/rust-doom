@@ -4,9 +4,8 @@ use crate::HEIGHT;
 use crate::WIDTH;
 use image::{DynamicImage, GenericImageView};
 use minifb::{Key, Window};
-const LINE_HEIGHT: usize = 20 * SCALE as usize;
+const LINE_HEIGHT: usize = 20 * crate::SCALE as usize;
 const INPUT_COOLDOWN: f64 = 0.15;
-const SCALE: f32 = WIDTH as f32 / 320 as f32;
 
 const SKULL_LUMP_NAME: &str = "M_SKULL1";
 const BACKGROUND_LUMP_NAME: &str = "TITLEPIC";
@@ -17,7 +16,7 @@ const LOAD_LUMP_NAME: &str = "M_LOADG";
 const SAVE_LUMP_NAME: &str = "M_SAVEG";
 const OPT_LUMP_NAME: &str = "M_OPTION";
 
-use crate::directory::get_assets_dir;
+use crate::directory::get_wad_dir;
 
 struct MenuItem {
     image: DynamicImage,
@@ -35,8 +34,8 @@ pub struct Menu {
 
 fn scale_image(img: DynamicImage) -> DynamicImage {
     img.resize(
-        (img.width() as f32 * SCALE) as u32,
-        (img.height() as f32 * SCALE) as u32,
+        (img.width() as f32 * crate::SCALE) as u32,
+        (img.height() as f32 * crate::SCALE) as u32,
         image::imageops::FilterType::Nearest,
     )
 }
@@ -58,8 +57,7 @@ fn render_image(img: &DynamicImage, x_pos: usize, y_pos: usize, buffer: &mut [u3
 
 impl Menu {
     pub fn new() -> Self {
-        let wad =
-            wad_parser::WadParser::new(get_assets_dir().join(crate::WAD_FILE).to_str().unwrap());
+        let wad = wad_parser::WadParser::new(get_wad_dir().join(crate::WAD_FILE).to_str().unwrap());
 
         let img = wad
             .get_image(BACKGROUND_LUMP_NAME)
