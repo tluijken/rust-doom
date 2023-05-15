@@ -27,6 +27,7 @@ fn main() {
         update_game_state(&mut game_state, &mut window, &mut menu);
         render_game_state(&mut buffer, &game_state, &menu);
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+        std::thread::sleep(std::time::Duration::from_micros(16_666)); // Approx 60 FPS
     }
 }
 
