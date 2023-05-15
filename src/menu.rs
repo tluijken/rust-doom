@@ -5,6 +5,7 @@ use crate::WIDTH;
 use image::{DynamicImage, GenericImageView};
 use minifb::{Key, Window};
 const LINE_HEIGHT: usize = 20 * crate::SCALE as usize;
+const MENU_X: usize = 105 * crate::SCALE as usize;
 
 const SKULL_LUMP_NAME: &str = "M_SKULL1";
 const BACKGROUND_LUMP_NAME: &str = "TITLEPIC";
@@ -115,18 +116,17 @@ impl Menu {
 
         // Render the logo
         let start_y = (HEIGHT - self.logo.height() as usize) / 4;
-        let start_x = WIDTH / 4 + 42;
-        render_image(&self.logo, start_x, start_y, buffer);
+        render_image(&self.logo, MENU_X, start_y, buffer);
 
         let mut start_y = start_y + self.logo.height() as usize + 10;
         for (i, option) in self.options.iter().enumerate() {
             let y = start_y;
-            let skull_x = start_x - self.skull.width() as usize - 10;
+            let skull_x = MENU_X - self.skull.width() as usize - 10;
             // render the skull if this is the selected option
             if i == self.selected {
                 render_image(&self.skull, skull_x, y, buffer);
             }
-            render_image(&option.image, start_x, y, buffer);
+            render_image(&option.image, MENU_X, y, buffer);
             start_y += LINE_HEIGHT;
         }
     }
