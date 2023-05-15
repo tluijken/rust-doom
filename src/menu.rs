@@ -6,6 +6,7 @@ use image::{DynamicImage, GenericImageView};
 use minifb::{Key, Window};
 const LINE_HEIGHT: usize = 20 * crate::SCALE as usize;
 const MENU_X: usize = 105 * crate::SCALE as usize;
+const PADDING: usize = 10;
 
 const SKULL_LUMP_NAME: &str = "M_SKULL1";
 const BACKGROUND_LUMP_NAME: &str = "TITLEPIC";
@@ -37,12 +38,16 @@ fn scale_image(img: DynamicImage) -> DynamicImage {
     )
 }
 
+fn is_black(pixel: &image::Rgba<u8>) -> bool {
+    pixel[0] == 0 && pixel[1] == 0 && pixel[2] == 0
+}
+
 fn render_image(img: &DynamicImage, x_pos: usize, y_pos: usize, buffer: &mut [u32]) {
     for (x, y, pixel) in img.pixels() {
-        let rgba = pixel.0;
-        if rgba[0] == 0 && rgba[1] == 0 && rgba[2] == 0 {
+        if is_black(&pixel) {
             continue;
         }
+        let rgba = pixel.0;
         // Convert the pixel's color channels from u8 to u32, and arrange them into an ARGB format
         let color = ((rgba[3] as u32) << 24)
             | ((rgba[0] as u32) << 16)
@@ -118,10 +123,10 @@ impl Menu {
         let start_y = (HEIGHT - self.logo.height() as usize) / 4;
         render_image(&self.logo, MENU_X, start_y, buffer);
 
-        let mut start_y = start_y + self.logo.height() as usize + 10;
+        let mut start_y = start_y + self.logo.height() as usize + PADDING;
         for (i, option) in self.options.iter().enumerate() {
             let y = start_y;
-            let skull_x = MENU_X - self.skull.width() as usize - 10;
+            let skull_x = MENU_X - self.skull.width() as usize - PADDING;
             // render the skull if this is the selected option
             if i == self.selected {
                 render_image(&self.skull, skull_x, y, buffer);

@@ -17,13 +17,15 @@ mod wad_parser;
 fn main() {
     let mut window =
         Window::new("Doom", WIDTH, HEIGHT, WindowOptions::default()).unwrap_or_else(|e| {
-            panic!("{}", e);
+            panic!("Unable to start new window: {}", e);
         });
 
     let mut menu = Menu::new();
     let mut game_state = GameState::Menu;
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
     while window.is_open() && game_state != GameState::Quit {
+        // reset all pixels to black
+        buffer.iter_mut().for_each(|pixel| *pixel = 0);
         update_game_state(&mut game_state, &mut window, &mut menu);
         render_game_state(&mut buffer, &game_state, &menu);
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
