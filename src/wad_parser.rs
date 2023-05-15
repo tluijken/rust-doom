@@ -1,16 +1,30 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use image::{DynamicImage, ImageBuffer, Rgb};
 use std::collections::HashMap;
+use std::env;
 use std::io::{Cursor, Read};
-
+use std::path::PathBuf;
 pub struct WadParser {
     // create a tuple array with an id, name and byte array
     pub lumps: HashMap<String, Vec<u8>>,
 }
 
+fn get_wad_dir() -> PathBuf {
+    if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        // If the CARGO_MANIFEST_DIR environment variable is set, we're probably running with `cargo run`
+        // CARGO_MANIFEST_DIR points to the directory where your Cargo.toml exists.
+        PathBuf::from(manifest_dir).join("wad")
+    } else {
+        // Otherwise, we're probably running the program directly
+        // env::current_exe() gives us the path of the current executable
+        PathBuf::from(env::current_exe().unwrap().parent().unwrap()).join("wad")
+    }
+}
+
 impl WadParser {
-    pub fn new(path: &str) -> Self {
-        let wad = wad::load_wad_file(path).expect("Failed to load WAD file");
+    pub fn new() -> Self {
+        let wad = wad::load_wad_file(get_wad_dir().join(crate::WAD_FILE))
+            .expect("Failed to load WAD file");
         let lumps = wad.entry_iter().fold(HashMap::new(), |mut result, item| {
             result.insert(item.display_name().to_string(), item.lump.to_vec());
             result

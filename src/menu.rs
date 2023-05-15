@@ -15,8 +15,6 @@ const LOAD_LUMP_NAME: &str = "M_LOADG";
 const SAVE_LUMP_NAME: &str = "M_SAVEG";
 const OPT_LUMP_NAME: &str = "M_OPTION";
 
-use crate::directory::get_wad_dir;
-
 struct MenuItem {
     image: DynamicImage,
     action: fn(&mut GameState),
@@ -55,7 +53,7 @@ fn render_image(img: &DynamicImage, x_pos: usize, y_pos: usize, buffer: &mut [u3
 
 impl Menu {
     pub fn new() -> Self {
-        let wad = wad_parser::WadParser::new(get_wad_dir().join(crate::WAD_FILE).to_str().unwrap());
+        let wad = wad_parser::WadParser::new();
 
         let img = wad
             .get_image(BACKGROUND_LUMP_NAME)

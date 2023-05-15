@@ -11,7 +11,6 @@ mod game_state;
 use game_state::GameState;
 mod menu;
 use menu::Menu;
-mod directory;
 
 mod wad_parser;
 
@@ -25,10 +24,7 @@ fn main() {
     let mut game_state = GameState::Menu;
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
     while window.is_open() && game_state != GameState::Quit {
-        window.update();
-
         update_game_state(&mut game_state, &mut window, &mut menu);
-
         render_game_state(&mut buffer, &game_state, &menu);
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
     }
