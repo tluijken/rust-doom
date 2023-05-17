@@ -136,36 +136,35 @@ fn decode_lump_image(
         columns.push(decode_column(&mut cursor)?);
     }
 
-    // Create an image buffer with the same dimensions as the Doom image
-    let mut img = ImageBuffer::new(picture_header.width as u32, picture_header.height as u32);
-
     // Iterate over the columns and the posts within each column
-    for (x, column) in columns.iter().enumerate() {
-        for post in &column.posts {
-            for y in 0..post.length {
-                // Get the color index from the post data
-                let color_index = post.data[y as usize];
-
-                // Look up the RGB values from the palette
-                let rgb = palette[color_index as usize];
-
-                // Set the pixel in the image buffer
-                img.put_pixel(x as u32, (post.top_delta + y) as u32, Rgb(rgb));
-            }
-        }
-    }
+    let img = columns
+        .iter()
+        .enumerate()
+        .flat_map(|(x, column)| {
+            column.posts.iter().flat_map(move |post| {
+                (0..post.length).map(move |y| (x, post.top_delta + y, post.data[y as usize]))
+            })
+        })
+        .map(|(x, y, color_index)| (x, y, palette[color_index as usize]))
+        .fold(
+            // Create an image buffer with the same dimensions as the Doom image
+            ImageBuffer::new(picture_header.width as u32, picture_header.height as u32),
+            |mut img, (x, y, rgb)| {
+                img.put_pixel(x as u32, y as u32, Rgb(rgb));
+                img
+            },
+        );
 
     // Convert the image buffer to a DynamicImage and return it
     Ok(DynamicImage::ImageRgb8(img))
 }
 
 fn decode_palette(data: &Vec<u8>) -> Vec<[u8; 3]> {
-    let mut palette = Vec::new();
-    for i in 0..256 {
+    (0..256).fold(Vec::new(), |mut result, i| {
         let r = data[i * 3];
         let g = data[i * 3 + 1];
         let b = data[i * 3 + 2];
-        palette.push([r, g, b]);
-    }
-    palette
+        result.push([r, g, b]);
+        result
+    })
 }
