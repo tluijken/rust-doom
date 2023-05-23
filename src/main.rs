@@ -1,3 +1,4 @@
+use menu::Menu;
 use minifb::{Key, Window, WindowOptions};
 
 pub const WIDTH: usize = 1024;
@@ -7,10 +8,10 @@ const SCALE: f32 = WIDTH as f32 / 320 as f32;
 // TEMPORARY: hard-coded the WAD file name
 const WAD_FILE: &str = "doom1.wad";
 
-mod game_state;
-use game_state::GameState;
+mod game;
+use game::{Game, GameState};
+mod image_tools;
 mod menu;
-use menu::Menu;
 mod wad;
 
 fn main() {
@@ -19,43 +20,43 @@ fn main() {
             panic!("Unable to start new window: {}", e);
         });
 
-    let mut menu = Menu::new();
-    let mut game_state = GameState::Menu;
+    let wad = wad::WadFile::load(WAD_FILE);
+    let mut game = game::Game::new(wad);
     let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
-    while window.is_open() && game_state != GameState::Quit {
+    while window.is_open() && game.state != GameState::Quit {
         // reset all pixels to black
         buffer.iter_mut().for_each(|pixel| *pixel = 0);
-        update_game_state(&mut game_state, &mut window, &mut menu);
-        render_game_state(&mut buffer, &game_state, &menu);
+        update_game_state(&mut game, &mut window);
+        render_game_state(&mut buffer, &game);
         window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
         std::thread::sleep(std::time::Duration::from_micros(16_666)); // Approx 60 FPS
     }
 }
 
-fn update_game_state(game_state: &mut GameState, window: &mut Window, menu: &mut Menu) {
-    match game_state {
+fn update_game_state(game: &mut Game, window: &mut Window) {
+    match game.state {
         GameState::Menu => {
-            menu.handle_input(window, game_state);
+            Menu::handle_input(window, game);
         }
         GameState::Playing => {
             if window.is_key_down(Key::Escape) {
-                *game_state = GameState::Menu;
+                game.set_state(GameState::Menu);
             }
         }
         GameState::GameOver => {
             if window.is_key_down(Key::Space) {
-                *game_state = GameState::Playing;
+                game.set_state(GameState::GameOver);
             }
         }
         GameState::Quit => {}
     }
 }
 
-fn render_game_state(buffer: &mut [u32], game_state: &GameState, menu: &Menu) {
+fn render_game_state(buffer: &mut [u32], game: &Game) {
     buffer.iter_mut().for_each(|pixel| *pixel = 0);
-    match game_state {
+    match game.state {
         GameState::Menu => {
-            menu.render(buffer);
+            game.menu.render(buffer, game);
         }
         GameState::Playing => {
             // Render gameplay graphics
