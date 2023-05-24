@@ -114,13 +114,15 @@ impl Menu {
         }
         game.menu.last_input = std::time::Instant::now();
         if window.is_key_down(Key::Down) {
-            game.menu.selected = (game.menu.selected + 1) % game.menu.options.len();
+            let new_selected = (game.menu.selected + 1) % game.menu.options.len();
+            game.menu.set_selected(new_selected);
         }
         if window.is_key_down(Key::Up) {
-            game.menu.selected = match game.menu.selected > 0 {
+            let new_selected = match game.menu.selected > 0 {
                 true => game.menu.selected - 1,
                 false => game.menu.options.len() - 1,
             };
+            game.menu.set_selected(new_selected);
         }
         if window.is_key_down(Key::Enter) {
             let shot_gun_lump = game
