@@ -25,6 +25,16 @@ const SELECT_HURT_ME_LUMP_NAME: &str = "M_HURT";
 const SELECT_ULTRA_VIOLENT_LUMP_NAME: &str = "M_ULTRA";
 const SELECT_NIGHTMARE_LUMP_NAME: &str = "M_NMARE";
 
+const SELECT_LOAD_LUMP_NAME: &str = "M_LOADG";
+const SELECT_SAVE_LUMP_NAME: &str = "M_SAVEG";
+
+// the option menu items
+const OPT_MESSAGES_LUMP_NAME: &str = "M_MESSG";
+const OPT_DETAIL_LUMP_NAME: &str = "M_DETAIL";
+const OPT_SCREEN_SIZE_LUMP_NAME: &str = "M_SCRNSZ";
+const OPT_MOUSE_SENSITIVITY_LUMP_NAME: &str = "M_MSENS";
+const OPT_SOUND_VOLUME_LUMP_NAME: &str = "M_SVOL";
+
 const INPUT_COOLDOWN: std::time::Duration = std::time::Duration::from_millis(200); // Change to your needs
 
 /// Defines the menu options for a menu
@@ -151,7 +161,7 @@ fn get_root_menu(wad: &WadFile) -> Vec<MenuItem> {
         },
         MenuItem {
             image: wad.get_image(OPT_LUMP_NAME).unwrap(),
-            action: |game| game.set_state(GameState::Playing),
+            action: |game| set_options_menu(game),
         },
         MenuItem {
             image: wad.get_image(LOAD_LUMP_NAME).unwrap(),
@@ -195,6 +205,38 @@ fn set_episode_menu(game: &mut Game) {
     game.menu.selected = 0;
     game.menu.title = game.wad.get_image(SELECT_EPISODE_LUMP_NAME).unwrap();
     game.menu.menu_type = MenuType::Episode;
+}
+
+fn set_options_menu(game: &mut Game) {
+    game.menu.options = vec![
+        MenuItem {
+            image: game.wad.get_image(OPT_DETAIL_LUMP_NAME).unwrap(),
+            action: |game| {
+                game.set_state(GameState::Playing);
+            },
+        },
+        MenuItem {
+            image: game.wad.get_image(OPT_SCREEN_SIZE_LUMP_NAME).unwrap(),
+            action: |game| {
+                game.set_state(GameState::Playing);
+            },
+        },
+        MenuItem {
+            image: game.wad.get_image(OPT_MOUSE_SENSITIVITY_LUMP_NAME).unwrap(),
+            action: |game| {
+                game.set_state(GameState::Playing);
+            },
+        },
+        MenuItem {
+            image: game.wad.get_image(OPT_SOUND_VOLUME_LUMP_NAME).unwrap(),
+            action: |game| {
+                game.set_state(GameState::Playing);
+            },
+        },
+    ];
+    game.menu.selected = 0;
+    game.menu.title = game.wad.get_image(OPT_LUMP_NAME).unwrap();
+    game.menu.menu_type = MenuType::Options;
 }
 
 fn set_skill_menu(game: &mut Game) {

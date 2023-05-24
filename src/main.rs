@@ -3,7 +3,7 @@ use minifb::{Key, Window, WindowOptions};
 
 pub const WIDTH: usize = 320;
 pub const HEIGHT: usize = 200;
-const WAD_FILE: &str = "doom2.wad";
+const WAD_FILE: &str = "doom1.wad";
 
 mod game;
 use game::{Game, GameState};
