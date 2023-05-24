@@ -25,18 +25,24 @@ fn is_black(pixel: &image::Rgba<u8>) -> bool {
 /// assert_ne!(buffer[0], 0);
 /// ```
 pub fn render_image(img: &DynamicImage, x_pos: usize, y_pos: usize, buffer: &mut [u32]) {
-    let pixels = img.pixels().filter(|(_, _, pixel)| !is_black(&pixel));
-    let rgb_pixels = pixels.map(|(x, y, pixel)| {
-        let rgba = pixel.0;
-        let color = ((rgba[3] as u32) << 24)
-            | ((rgba[0] as u32) << 16)
-            | ((rgba[1] as u32) << 8)
-            | rgba[2] as u32;
-        (((y as usize + y_pos) * WIDTH) + (x as usize + x_pos), color)
-    });
-    rgb_pixels.for_each(|(pos, color)| {
-        if pos < buffer.len() {
-            buffer[pos] = color
-        }
-    });
+    let length = &buffer.len();
+    img.pixels()
+        // filter out black pixels
+        .filter(|(_, _, pixel)| !is_black(&pixel))
+        // map x and y to the position in the buffer
+        .map(|(x, y, pixel)| (((y as usize + y_pos) * WIDTH) + (x as usize + x_pos), pixel))
+        // filter out pixels that are outside the buffer
+        .filter(|(pos, _)| &pos < &length)
+        // convert the pixel to a color and write it to the buffer
+        .for_each(|(pos, pixel)| buffer[pos] = convert_to_color(&pixel));
+}
+
+/// Converts a pixel to a color
+/// # Arguments
+/// * `pixel` - The pixel to convert as an image::Rgba<u8>.
+/// # Returns
+/// The color of the pixel as a u32
+fn convert_to_color(pixel: &image::Rgba<u8>) -> u32 {
+    let rgba = pixel.0;
+    ((rgba[3] as u32) << 24) | ((rgba[0] as u32) << 16) | ((rgba[1] as u32) << 8) | rgba[2] as u32
 }

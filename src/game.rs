@@ -31,20 +31,10 @@ pub struct Game {
     pub state: GameState,
     pub menu: Menu,
     pub wad: WadFile,
-    pub episode: Episode,
+    pub episode: usize,
     pub skill: Skill,
     pub skull: DynamicImage,
     pub background: DynamicImage,
-}
-
-/// The possible episodes to play
-/// # Remarks
-/// This enum is used to determine which episode the player is playing. This is used to determine
-/// which maps to load, and which textures to use.
-pub enum Episode {
-    KneeDeep,
-    Shores,
-    Inferno,
 }
 
 /// The possible skill levels
@@ -86,7 +76,7 @@ impl Game {
             state: GameState::Menu,
             menu: Menu::root(&wad),
             wad,
-            episode: Episode::KneeDeep,
+            episode: 1,
             background,
             skull,
             skill: Skill::TooYoungToDie,
@@ -119,9 +109,9 @@ impl Game {
     /// use wad::WadFile;
     /// let wad = WadFile::new("doom1.wad");
     /// let mut game = Game::new(wad);
-    /// game.set_episode(Episode::Shores);
+    /// game.set_episode(2);
     /// ```
-    pub fn set_episode(&mut self, episode: Episode) {
+    pub fn set_episode(&mut self, episode: usize) {
         self.episode = episode;
     }
 

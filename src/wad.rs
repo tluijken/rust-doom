@@ -1,10 +1,10 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use image::{DynamicImage, ImageBuffer, Rgb};
+use rodio::Source;
 use std::collections::HashMap;
 use std::env;
 use std::io::{Cursor, Read};
 use std::path::PathBuf;
-
 const PALETTE_LUMP_NAME: &str = "PLAYPAL";
 
 pub struct WadFile {

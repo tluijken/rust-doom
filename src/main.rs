@@ -7,6 +7,7 @@ const WAD_FILE: &str = "doom1.wad";
 
 mod game;
 use game::{Game, GameState};
+mod audio;
 mod image_tools;
 mod menu;
 mod wad;

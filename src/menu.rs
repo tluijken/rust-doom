@@ -1,4 +1,4 @@
-use crate::game::{Episode, Game, GameState, Skill};
+use crate::game::{Game, GameState, Skill};
 use crate::image_tools::render_image;
 use crate::wad::WadFile;
 use crate::HEIGHT;
@@ -14,9 +14,7 @@ const LOAD_LUMP_NAME: &str = "M_LOADG";
 const SAVE_LUMP_NAME: &str = "M_SAVEG";
 const OPT_LUMP_NAME: &str = "M_OPTION";
 const SELECT_EPISODE_LUMP_NAME: &str = "M_EPISOD";
-const SELECT_KNEE_DEEP_LUMP_NAME: &str = "M_EPI1";
-const SELECT_SHORE_LUMP_NAME: &str = "M_EPI2";
-const SELECT_INFERNO_LUMP_NAME: &str = "M_EPI3";
+const SELECT_EPISODE_PREFIX: &str = "M_EPI";
 
 const SELECT_SKILL_LUMP_NAME: &str = "M_SKILL";
 const SELECT_TOO_YOUNG_LUMP_NAME: &str = "M_JKILL";
@@ -24,6 +22,8 @@ const SELECT_HEY_NOT_TOO_ROUGH_LUMP_NAME: &str = "M_ROUGH";
 const SELECT_HURT_ME_LUMP_NAME: &str = "M_HURT";
 const SELECT_ULTRA_VIOLENT_LUMP_NAME: &str = "M_ULTRA";
 const SELECT_NIGHTMARE_LUMP_NAME: &str = "M_NMARE";
+
+const SHOTGUN_LUMP_NAME: &str = "DSPISTOL";
 
 const SELECT_LOAD_LUMP_NAME: &str = "M_LOADG";
 const SELECT_SAVE_LUMP_NAME: &str = "M_SAVEG";
@@ -63,6 +63,13 @@ pub struct Menu {
     last_input: std::time::Instant,
 }
 
+impl MenuItem {
+    /// Creates a new menu item
+    pub fn new(image: DynamicImage, action: fn(&mut Game)) -> Self {
+        Self { image, action }
+    }
+}
+
 impl Menu {
     /// Creates a new menu root menu containing the start, load, options, and quit options
     pub fn root(wad: &WadFile) -> Self {
@@ -73,6 +80,26 @@ impl Menu {
             selected: 0,
             last_input: std::time::Instant::now(),
         }
+    }
+
+    pub fn set_menu_type(&mut self, menu_type: MenuType) -> &mut Self {
+        self.menu_type = menu_type;
+        self
+    }
+
+    pub fn set_options(&mut self, options: Vec<MenuItem>) -> &mut Self {
+        self.options = options;
+        self
+    }
+
+    pub fn set_selected(&mut self, selected: usize) -> &mut Self {
+        self.selected = selected;
+        self
+    }
+
+    pub fn set_title(&mut self, title: DynamicImage) -> &mut Self {
+        self.title = title;
+        self
     }
 
     /// Handles input for the menu
@@ -96,6 +123,11 @@ impl Menu {
             };
         }
         if window.is_key_down(Key::Enter) {
+            let shot_gun_lump = game
+                .wad
+                .get_lump(SHOTGUN_LUMP_NAME)
+                .expect("Shotgun lump not found");
+            crate::audio::play_sound((&shot_gun_lump).to_vec());
             let action = game.menu.options[game.menu.selected].action;
             action(game);
         }
@@ -146,141 +178,142 @@ impl Menu {
 }
 
 fn set_root_menu(game: &mut Game) {
-    game.menu.options = get_root_menu(&game.wad);
-    game.menu.title = game.wad.get_image(TITLE_LUMP_NAME).unwrap();
-    game.menu.menu_type = MenuType::Root;
-    game.menu.selected = 0;
+    game.menu
+        .set_options(get_root_menu(&game.wad))
+        .set_menu_type(MenuType::Root)
+        .set_selected(0)
+        .set_title(game.wad.get_image(TITLE_LUMP_NAME).unwrap());
 }
 
 /// Gets the root menu items (start, load, options, quit)
 fn get_root_menu(wad: &WadFile) -> Vec<MenuItem> {
     vec![
-        MenuItem {
-            image: wad.get_image(START_LUMP_NAME).unwrap(),
-            action: |game| set_episode_menu(game),
-        },
-        MenuItem {
-            image: wad.get_image(OPT_LUMP_NAME).unwrap(),
-            action: |game| set_options_menu(game),
-        },
-        MenuItem {
-            image: wad.get_image(LOAD_LUMP_NAME).unwrap(),
-            action: |game| game.set_state(GameState::Playing),
-        },
-        MenuItem {
-            image: wad.get_image(SAVE_LUMP_NAME).unwrap(),
-            action: |game| game.set_state(GameState::Playing),
-        },
-        MenuItem {
-            image: wad.get_image(QUIT_LUMP_NAME).unwrap(),
-            action: |game| game.set_state(GameState::Quit),
-        },
+        MenuItem::new(wad.get_image(START_LUMP_NAME).unwrap(), |game| {
+            set_episode_menu(game)
+        }),
+        MenuItem::new(wad.get_image(OPT_LUMP_NAME).unwrap(), |game| {
+            set_options_menu(game)
+        }),
+        MenuItem::new(wad.get_image(LOAD_LUMP_NAME).unwrap(), |game| {
+            game.set_state(GameState::Playing)
+        }),
+        MenuItem::new(wad.get_image(SAVE_LUMP_NAME).unwrap(), |game| {
+            game.set_state(GameState::Playing)
+        }),
+        MenuItem::new(wad.get_image(QUIT_LUMP_NAME).unwrap(), |game| {
+            game.set_state(GameState::Quit)
+        }),
     ]
 }
 
 fn set_episode_menu(game: &mut Game) {
-    game.menu.options = vec![
-        MenuItem {
-            image: game.wad.get_image(SELECT_KNEE_DEEP_LUMP_NAME).unwrap(),
-            action: |game| {
-                set_skill_menu(game);
-                game.set_episode(Episode::KneeDeep);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(SELECT_SHORE_LUMP_NAME).unwrap(),
-            action: |game| {
-                set_skill_menu(game);
-                game.set_episode(Episode::Shores);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(SELECT_INFERNO_LUMP_NAME).unwrap(),
-            action: |game| {
-                set_skill_menu(game);
-                game.set_episode(Episode::Inferno);
-            },
-        },
-    ];
-    game.menu.selected = 0;
-    game.menu.title = game.wad.get_image(SELECT_EPISODE_LUMP_NAME).unwrap();
-    game.menu.menu_type = MenuType::Episode;
+    game.menu
+        .set_options(vec![
+            MenuItem::new(
+                game.wad
+                    .get_image(format!("{}{}", SELECT_EPISODE_PREFIX, 1).as_str())
+                    .unwrap(),
+                |game| {
+                    set_skill_menu(game);
+                    game.set_episode(1);
+                },
+            ),
+            MenuItem::new(
+                game.wad
+                    .get_image(format!("{}{}", SELECT_EPISODE_PREFIX, 2).as_str())
+                    .unwrap(),
+                |game| {
+                    set_skill_menu(game);
+                    game.set_episode(2);
+                },
+            ),
+            MenuItem::new(
+                game.wad
+                    .get_image(format!("{}{}", SELECT_EPISODE_PREFIX, 3).as_str())
+                    .unwrap(),
+                |game| {
+                    set_skill_menu(game);
+                    game.set_episode(2);
+                },
+            ),
+        ])
+        .set_selected(0)
+        .set_menu_type(MenuType::Episode)
+        .set_title(game.wad.get_image(SELECT_EPISODE_LUMP_NAME).unwrap());
 }
 
 fn set_options_menu(game: &mut Game) {
-    game.menu.options = vec![
-        MenuItem {
-            image: game.wad.get_image(OPT_DETAIL_LUMP_NAME).unwrap(),
-            action: |game| {
+    game.menu
+        .set_options(vec![
+            MenuItem::new(game.wad.get_image(OPT_DETAIL_LUMP_NAME).unwrap(), |game| {
                 game.set_state(GameState::Playing);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(OPT_SCREEN_SIZE_LUMP_NAME).unwrap(),
-            action: |game| {
-                game.set_state(GameState::Playing);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(OPT_MOUSE_SENSITIVITY_LUMP_NAME).unwrap(),
-            action: |game| {
-                game.set_state(GameState::Playing);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(OPT_SOUND_VOLUME_LUMP_NAME).unwrap(),
-            action: |game| {
-                game.set_state(GameState::Playing);
-            },
-        },
-    ];
-    game.menu.selected = 0;
-    game.menu.title = game.wad.get_image(OPT_LUMP_NAME).unwrap();
-    game.menu.menu_type = MenuType::Options;
+            }),
+            MenuItem::new(
+                game.wad.get_image(OPT_SCREEN_SIZE_LUMP_NAME).unwrap(),
+                |game| {
+                    game.set_state(GameState::Playing);
+                },
+            ),
+            MenuItem::new(
+                game.wad.get_image(OPT_MOUSE_SENSITIVITY_LUMP_NAME).unwrap(),
+                |game| {
+                    game.set_state(GameState::Playing);
+                },
+            ),
+            MenuItem::new(
+                game.wad.get_image(OPT_SOUND_VOLUME_LUMP_NAME).unwrap(),
+                |game| {
+                    game.set_state(GameState::Playing);
+                },
+            ),
+        ])
+        .set_selected(0)
+        .set_menu_type(MenuType::Options)
+        .set_title(game.wad.get_image(OPT_LUMP_NAME).unwrap());
 }
 
 fn set_skill_menu(game: &mut Game) {
-    game.menu.options = vec![
-        MenuItem {
-            image: game.wad.get_image(SELECT_TOO_YOUNG_LUMP_NAME).unwrap(),
-            action: |game| {
-                game.set_skill(Skill::TooYoungToDie);
-                game.set_state(GameState::Playing);
-            },
-        },
-        MenuItem {
-            image: game
-                .wad
-                .get_image(SELECT_HEY_NOT_TOO_ROUGH_LUMP_NAME)
-                .unwrap(),
-            action: |game| {
-                game.set_skill(Skill::HeyNotTooRough);
-                game.set_state(GameState::Playing);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(SELECT_HURT_ME_LUMP_NAME).unwrap(),
-            action: |game| {
-                game.set_skill(Skill::HurtMePlenty);
-                game.set_state(GameState::Playing);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(SELECT_ULTRA_VIOLENT_LUMP_NAME).unwrap(),
-            action: |game| {
-                game.set_skill(Skill::UltraViolence);
-                game.set_state(GameState::Playing);
-            },
-        },
-        MenuItem {
-            image: game.wad.get_image(SELECT_NIGHTMARE_LUMP_NAME).unwrap(),
-            action: |game| {
-                game.set_skill(Skill::Nightmare);
-                game.set_state(GameState::Playing);
-            },
-        },
-    ];
-    game.menu.selected = 0;
-    game.menu.menu_type = MenuType::Skill;
-    game.menu.title = game.wad.get_image(SELECT_SKILL_LUMP_NAME).unwrap();
+    game.menu
+        .set_options(vec![
+            MenuItem::new(
+                game.wad.get_image(SELECT_TOO_YOUNG_LUMP_NAME).unwrap(),
+                |game| {
+                    game.set_skill(Skill::TooYoungToDie);
+                    game.set_state(GameState::Playing);
+                },
+            ),
+            MenuItem::new(
+                game.wad
+                    .get_image(SELECT_HEY_NOT_TOO_ROUGH_LUMP_NAME)
+                    .unwrap(),
+                |game| {
+                    game.set_skill(Skill::HeyNotTooRough);
+                    game.set_state(GameState::Playing);
+                },
+            ),
+            MenuItem::new(
+                game.wad.get_image(SELECT_HURT_ME_LUMP_NAME).unwrap(),
+                |game| {
+                    game.set_skill(Skill::HurtMePlenty);
+                    game.set_state(GameState::Playing);
+                },
+            ),
+            MenuItem::new(
+                game.wad.get_image(SELECT_ULTRA_VIOLENT_LUMP_NAME).unwrap(),
+                |game| {
+                    game.set_skill(Skill::UltraViolence);
+                    game.set_state(GameState::Playing);
+                },
+            ),
+            MenuItem::new(
+                game.wad.get_image(SELECT_NIGHTMARE_LUMP_NAME).unwrap(),
+                |game| {
+                    game.set_skill(Skill::Nightmare);
+                    game.set_state(GameState::Playing);
+                },
+            ),
+        ])
+        .set_selected(0)
+        .set_menu_type(MenuType::Skill)
+        .set_title(game.wad.get_image(SELECT_SKILL_LUMP_NAME).unwrap());
 }
